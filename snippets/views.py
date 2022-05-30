@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
@@ -12,6 +13,10 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework import mixins
 from rest_framework import generics
+from django.contrib.auth.models import User
+from snippets.serializers import UserSerializer
+from rest_framework import permissions
+from snippets.permissions import IsOwnerOrReadOnly
 
 @csrf_exempt
 @api_view(['GET', 'POST'])
@@ -59,15 +64,30 @@ def snippet_detail(request, pk, format=None):
         snippet.delete()
         return HttpResponse(status=204)
 
+
 class SnippetList(generics.ListCreateAPIView):
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
-    
+
+
+permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                      IsOwnerOrReadOnly]
+
+
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 # class SnippetList(mixins.ListModelMixin,
 #                   mixins.CreateModelMixin,
 #                   generics.GenericAPIView):
@@ -96,7 +116,7 @@ class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
 
 #     def delete(self, request, *args, **kwargs):
 #         return self.destroy(request, *args, **kwargs)
-        
+
 
 # class SnippetList(APIView):
 #     """
